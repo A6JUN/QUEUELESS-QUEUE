@@ -67,11 +67,16 @@ class _LoginScreenState extends State<LoginScreen> {
         
         if (!mounted) return;
         
-        // Navigate to service selection screen with animation
-        Navigator.pushReplacement(
-          context,
+        // Wait a bit for auth state to propagate
+        await Future.delayed(const Duration(milliseconds: 300));
+        
+        if (!mounted) return;
+        
+        // Navigate to service selection (AuthWrapper will handle this but we force it)
+        Navigator.of(context).pushReplacement(
           PageTransitions.fadeScaleTransition(const ServiceSelectionScreen()),
         );
+        
       } catch (e) {
         if (!mounted) return;
         

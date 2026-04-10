@@ -11,11 +11,13 @@ class UserService {
     required String uid,
     required String fullName,
     required String email,
+    String role = 'user', // Default role is 'user'
   }) async {
     try {
       await _firestore.collection('users').doc(uid).set({
         'fullName': fullName,
         'email': email,
+        'role': role,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -52,6 +54,35 @@ class UserService {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  /// Get user's role from Firestore
+  Future<String?> getUserRole() async {
+    try {
+      final uid = _auth.currentUser?.uid;
+      print('Getting role for UID: $uid'); // Debug log
+      
+      if (uid == null) {
+        print('UID is null'); // Debug log
+        return null;
+      }
+
+      final doc = await _firestore.collection('users').doc(uid).get();
+      print('Document exists: ${doc.exists}'); // Debug log
+      
+      if (doc.exists) {
+        final data = doc.data();
+        print('User data: $data'); // Debug log
+        final role = data?['role'] as String? ?? 'user';
+        print('Extracted role: $role'); // Debug log
+        return role;
+      }
+      print('Document does not exist, returning user'); // Debug log
+      return 'user';
+    } catch (e) {
+      print('Error getting role: $e'); // Debug log
+      return 'user';
     }
   }
 }

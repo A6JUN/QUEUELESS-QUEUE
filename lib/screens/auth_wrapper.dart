@@ -4,7 +4,6 @@ import 'login_screen.dart';
 import 'service_selection_screen.dart';
 
 /// Wrapper widget that handles authentication state
-/// Automatically navigates to appropriate screen based on auth status
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -13,7 +12,6 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Show loading indicator while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(
@@ -22,12 +20,10 @@ class AuthWrapper extends StatelessWidget {
           );
         }
         
-        // If user is logged in, show service selection screen
-        if (snapshot.hasData && snapshot.data != null) {
+        if (snapshot.hasData) {
           return const ServiceSelectionScreen();
         }
         
-        // If user is not logged in, show login screen
         return const LoginScreen();
       },
     );

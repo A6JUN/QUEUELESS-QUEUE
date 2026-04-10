@@ -7,6 +7,8 @@ import '../utils/page_transitions.dart';
 import '../widgets/service_card.dart';
 import 'hospital_screen.dart';
 import 'login_screen.dart';
+import 'debug_role_screen.dart';
+import 'admin_dashboard_screen.dart';
 
 /// Service selection screen showing available services
 class ServiceSelectionScreen extends StatefulWidget {
@@ -33,6 +35,16 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
       setState(() {
         _userName = name;
       });
+    }
+    
+    // Check if user is admin
+    final role = await _userService.getUserRole();
+    if (mounted && role == 'admin') {
+      // Navigate to admin dashboard
+      Navigator.pushReplacement(
+        context,
+        PageTransitions.fadeScaleTransition(const AdminDashboardScreen()),
+      );
     }
   }
 
@@ -195,9 +207,18 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                           ),
                         );
                       },
-                      child: Text(
-                        'Queueless',
-                        style: AppStyles.headingLight.copyWith(fontSize: 36),
+                      child: GestureDetector(
+                        onLongPress: () {
+                          // Hidden debug screen access
+                          Navigator.push(
+                            context,
+                            PageTransitions.slideUpTransition(const DebugRoleScreen()),
+                          );
+                        },
+                        child: Text(
+                          'Queueless',
+                          style: AppStyles.headingLight.copyWith(fontSize: 36),
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppStyles.spacingSmall),

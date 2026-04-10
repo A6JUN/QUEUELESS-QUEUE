@@ -1,27 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_styles.dart';
 import '../widgets/custom_button.dart';
 
-/// Hospital screen displaying list of available hospitals
+/// Hospital screen displaying list of available hospitals from Firestore
 class HospitalScreen extends StatelessWidget {
   const HospitalScreen({super.key});
-
-  /// Hospital data model
-  static const List<Map<String, String>> hospitals = [
-    {
-      'name': 'Aster Hospital',
-      'description': 'Multi-specialty hospital with 24/7 emergency services',
-    },
-    {
-      'name': 'City Hospital',
-      'description': 'Leading healthcare provider with modern facilities',
-    },
-    {
-      'name': 'Sunrise Hospital',
-      'description': 'Comprehensive care with experienced medical staff',
-    },
-  ];
 
   /// Handles token booking
   void _bookToken(BuildContext context, String hospitalName) {
@@ -45,83 +30,170 @@ class HospitalScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(isSmallScreen ? AppStyles.spacingLarge : AppStyles.spacingXLarge),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Back button with animation
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 400),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.scale(
-                      scale: value,
-                      child: child,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with back button
+            Padding(
+              padding: EdgeInsets.all(isSmallScreen ? AppStyles.spacingLarge : AppStyles.spacingXLarge),
+              child: Row(
+                children: [
+                  // Back button with animation
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 400),
+                    builder: (context, value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.scale(
+                          scale: value,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBackground,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [AppStyles.cardShadow],
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ),
-                  );
-                },
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.cardBackground,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [AppStyles.cardShadow],
                   ),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-              ),
-              
-              SizedBox(height: isSmallScreen ? AppStyles.spacingLarge : AppStyles.spacingXLarge),
-              
-              // Title with animation
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 500),
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(-20 * (1 - value), 0),
-                      child: child,
+                  
+                  SizedBox(width: isSmallScreen ? AppStyles.spacingMedium : AppStyles.spacingLarge),
+                  
+                  // Title with animation
+                  Expanded(
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 500),
+                      builder: (context, value, child) {
+                        return Opacity(
+                          opacity: value,
+                          child: Transform.translate(
+                            offset: Offset(-20 * (1 - value), 0),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Hospitals',
+                        style: AppStyles.heading1.copyWith(fontSize: 28),
+                      ),
                     ),
-                  );
-                },
-                child: Text(
-                  'Hospitals',
-                  style: AppStyles.heading1,
-                ),
-              ),
-              
-              SizedBox(height: isSmallScreen ? AppStyles.spacingLarge : AppStyles.spacingXLarge),
-              
-              // Hospital list
-              Expanded(
-                child: ListView.separated(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: hospitals.length,
-                  separatorBuilder: (context, index) => SizedBox(
-                    height: isSmallScreen ? AppStyles.spacingMedium : AppStyles.spacingLarge,
                   ),
-                  itemBuilder: (context, index) {
-                    final hospital = hospitals[index];
-                    return _AnimatedHospitalCard(
-                      delay: index * 100,
-                      child: _HospitalCard(
-                        name: hospital['name']!,
-                        description: hospital['description']!,
-                        onBookToken: () => _bookToken(context, hospital['name']!),
+                ],
+              ),
+            ),
+            
+            // Hospital list from Firestore
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('hospitals')
+                    .orderBy('name')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 60,
+                            color: AppColors.error,
+                          ),
+                          const SizedBox(height: AppStyles.spacingLarge),
+                          Text(
+                            'Error loading hospitals',
+                            style: AppStyles.heading3,
+                          ),
+                          const SizedBox(height: AppStyles.spacingSmall),
+                          Text(
+                            snapshot.error.toString(),
+                            style: AppStyles.bodySmall,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
                     );
-                  },
-                ),
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  // Filter active hospitals in the app instead of in the query
+                  final allHospitals = snapshot.data?.docs ?? [];
+                  final hospitals = allHospitals.where((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    return data['isActive'] == true;
+                  }).toList();
+
+                  if (hospitals.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.local_hospital_outlined,
+                            size: 80,
+                            color: AppColors.textSecondary.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: AppStyles.spacingLarge),
+                          Text(
+                            'No hospitals available',
+                            style: AppStyles.heading3,
+                          ),
+                          const SizedBox(height: AppStyles.spacingSmall),
+                          Text(
+                            'Please check back later',
+                            style: AppStyles.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      isSmallScreen ? AppStyles.spacingLarge : AppStyles.spacingXLarge,
+                      0,
+                      isSmallScreen ? AppStyles.spacingLarge : AppStyles.spacingXLarge,
+                      isSmallScreen ? AppStyles.spacingLarge : AppStyles.spacingXLarge,
+                    ),
+                    itemCount: hospitals.length,
+                    separatorBuilder: (context, index) => SizedBox(
+                      height: isSmallScreen ? AppStyles.spacingMedium : AppStyles.spacingLarge,
+                    ),
+                    itemBuilder: (context, index) {
+                      final hospital = hospitals[index];
+                      final data = hospital.data() as Map<String, dynamic>;
+                      
+                      return _AnimatedHospitalCard(
+                        delay: index * 100,
+                        child: _HospitalCard(
+                          name: data['name'] ?? 'Unknown Hospital',
+                          description: data['description'] ?? '',
+                          address: data['address'] ?? '',
+                          phone: data['phone'] ?? '',
+                          onBookToken: () => _bookToken(context, data['name'] ?? 'Unknown Hospital'),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -162,11 +234,15 @@ class _AnimatedHospitalCard extends StatelessWidget {
 class _HospitalCard extends StatefulWidget {
   final String name;
   final String description;
+  final String address;
+  final String phone;
   final VoidCallback onBookToken;
 
   const _HospitalCard({
     required this.name,
     required this.description,
+    required this.address,
+    required this.phone,
     required this.onBookToken,
   });
 
@@ -227,7 +303,51 @@ class _HospitalCardState extends State<_HospitalCard> {
               Text(
                 widget.description,
                 style: AppStyles.bodyMedium.copyWith(fontSize: 15),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
+              
+              // Address
+              if (widget.address.isNotEmpty) ...[
+                const SizedBox(height: AppStyles.spacingMedium),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        widget.address,
+                        style: AppStyles.bodySmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              
+              // Phone
+              if (widget.phone.isNotEmpty) ...[
+                const SizedBox(height: AppStyles.spacingSmall),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.phone_outlined,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      widget.phone,
+                      style: AppStyles.bodySmall,
+                    ),
+                  ],
+                ),
+              ],
               
               const SizedBox(height: AppStyles.spacingLarge),
               
