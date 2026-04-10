@@ -1,103 +1,118 @@
 import 'package:flutter/material.dart';
-import '../screens/hospital_screen.dart';
+import '../utils/app_colors.dart';
+import '../utils/app_styles.dart';
 
+/// Animated service card widget for service selection
 class ServiceCard extends StatefulWidget {
-
-  final String name;
   final IconData icon;
+  final String title;
+  final VoidCallback onTap;
 
   const ServiceCard({
     super.key,
-    required this.name,
     required this.icon,
+    required this.title,
+    required this.onTap,
   });
 
   @override
   State<ServiceCard> createState() => _ServiceCardState();
 }
 
-class _ServiceCardState extends State<ServiceCard> {
+class _ServiceCardState extends State<ServiceCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
 
-  double scale = 1;
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.94).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails details) {
+    setState(() => _isPressed = true);
+    _controller.forward();
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    setState(() => _isPressed = false);
+    _controller.reverse();
+  }
+
+  void _onTapCancel() {
+    setState(() => _isPressed = false);
+    _controller.reverse();
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return GestureDetector(
-
-      onTapDown: (_) {
-        setState(() => scale = 0.92);
-      },
-
-      onTapUp: (_) {
-        setState(() => scale = 1);
-      },
-
-      onTapCancel: () {
-        setState(() => scale = 1);
-      },
-
-      onTap: () {
-
-        if (widget.name == "Hospital") {
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const HospitalScreen(),
-            ),
-          );
-
-        }
-
-      },
-
-      child: AnimatedScale(
-        scale: scale,
-        duration: const Duration(milliseconds: 120),
-
-        child: Container(
-
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      onTap: widget.onTap,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 8,
-                offset: Offset(0,4),
-              ),
-            ],
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppStyles.radiusMedium),
+            boxShadow: _isPressed ? [AppStyles.cardShadow] : AppStyles.cardShadowHover,
           ),
-
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.indigo.shade100,
-
-                child: Icon(
-                  widget.icon,
-                  color: Colors.indigo,
-                  size: 28,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppStyles.spacingMedium,
+              vertical: AppStyles.spacingLarge,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon with gradient background
+                Flexible(
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(AppStyles.radiusSmall),
+                      boxShadow: AppStyles.iconShadow,
+                    ),
+                    child: Icon(
+                      widget.icon,
+                      size: 36,
+                      color: AppColors.textLight,
+                    ),
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 12),
-
-              Text(
-                widget.name,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                const SizedBox(height: AppStyles.spacingMedium),
+                // Title
+                Flexible(
+                  child: Text(
+                    widget.title,
+                    style: AppStyles.heading3.copyWith(fontSize: 14),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-
-            ],
+              ],
+            ),
           ),
         ),
       ),
