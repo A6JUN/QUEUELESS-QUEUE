@@ -9,6 +9,8 @@ import 'hospital_screen.dart';
 import 'login_screen.dart';
 import 'debug_role_screen.dart';
 import 'admin_dashboard_screen.dart';
+import 'kannur_university_screen.dart';
+import 'my_tokens_screen.dart';
 
 /// Service selection screen showing available services
 class ServiceSelectionScreen extends StatefulWidget {
@@ -84,6 +86,14 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
     );
   }
 
+  /// Navigates to Kannur University screen
+  void _navigateToKannurUniversity(BuildContext context) {
+    Navigator.push(
+      context,
+      PageTransitions.slideUpTransition(const KannurUniversityScreen()),
+    );
+  }
+
   /// Shows coming soon message for other services
   void _showComingSoon(BuildContext context, String serviceName) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -124,7 +134,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // User email and logout button row
+                    // User email and buttons row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -153,7 +163,50 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                           ),
                         ),
                         
-                        const SizedBox(width: AppStyles.spacingMedium),
+                        const SizedBox(width: AppStyles.spacingSmall),
+                        
+                        // My Tokens button with animation
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.0, end: 1.0),
+                          duration: const Duration(milliseconds: 500),
+                          builder: (context, value, child) {
+                            return Opacity(
+                              opacity: value,
+                              child: Transform.scale(
+                                scale: value,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.receipt_long,
+                                color: AppColors.textLight,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  PageTransitions.slideUpTransition(const MyTokensScreen()),
+                                );
+                              },
+                              tooltip: 'My Tokens',
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(width: AppStyles.spacingSmall),
                         
                         // Logout button with animation
                         TweenAnimationBuilder<double>(
@@ -186,6 +239,7 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                                 color: AppColors.textLight,
                               ),
                               onPressed: () => _handleLogout(context),
+                              tooltip: 'Logout',
                             ),
                           ),
                         ),
@@ -308,13 +362,13 @@ class _ServiceSelectionScreenState extends State<ServiceSelectionScreen> {
                           ),
                         ),
                         
-                        // College Office service
+                        // Kannur University service
                         _AnimatedServiceCard(
                           delay: 200,
                           child: ServiceCard(
-                            icon: Icons.school,
-                            title: 'College Office',
-                            onTap: () => _showComingSoon(context, 'College Office'),
+                            icon: Icons.account_balance,
+                            title: 'Kannur University',
+                            onTap: () => _navigateToKannurUniversity(context),
                           ),
                         ),
                         
